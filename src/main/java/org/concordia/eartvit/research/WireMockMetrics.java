@@ -14,15 +14,17 @@ import java.lang.management.OperatingSystemMXBean;
 public class WireMockMetrics {
 
     public static boolean TRACE = false;
-    public static boolean DEEP_LEVEL = false;
+    public static int DEEP_LEVEL = 0;
     public static String DEEP_ENDPOINT = "";
+    public static int REQ_SIZE_FACTOR = 10;
 
     public static void main(String[] args) {
 
         String trace = System.getenv().getOrDefault("TRACEACTIVE", "False");
 
-        DEEP_LEVEL = Boolean.parseBoolean(System.getenv().getOrDefault("DEEP_LEVEL", "false"));
+        DEEP_LEVEL = Integer.parseInt(System.getenv().getOrDefault("DEEP_LEVEL", "0"));
         DEEP_ENDPOINT = System.getenv().getOrDefault("DEEP_ENDPOINT", "http://localhost:8081/mock");
+        REQ_SIZE_FACTOR = Integer.parseInt(System.getenv().getOrDefault("REQPAYLOADSIZEFACTOR", "10"));
 
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 
@@ -54,6 +56,10 @@ public class WireMockMetrics {
             System.out.println("\tASYNCRESPTHREADS:" + asyncRespThreads);
             System.out.println("\tJETTYACCEPTORS:" + jettyAcceptors);
             System.out.println("\tJETTYACCEPTORSQSIZE:" + jettyAcceptQSize);
+            System.out.println("\tREQPAYLOADSIZEFACTOR:" + REQ_SIZE_FACTOR);
+            System.out.println("\tDEEP_LEVEL:" + DEEP_LEVEL);
+            if (DEEP_LEVEL > 0)
+                System.out.println("\tDEEP_ENDPOINT:" + DEEP_ENDPOINT);
         }
 
         WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.options()

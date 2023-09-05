@@ -35,6 +35,9 @@ public class RandomBodyStringResponseTransformer extends ResponseTransformer {
         try {
             String id = request.queryParameter("id").firstValue();
             length = Integer.parseInt(id);
+            if (WireMockMetrics.TRACE){
+                System.out.println("Got id:" + length);
+            }
         } catch (Exception e) {
             if (WireMockMetrics.TRACE) {
                 System.out.println("Missing or malformed integer for id value, default 10 shall be used!");
@@ -54,17 +57,40 @@ public class RandomBodyStringResponseTransformer extends ResponseTransformer {
         responseBody.put("content", content.toString());
 
         if (WireMockMetrics.TRACE) {
-            System.out.println("Generating " + length + " characters as 'content': '" + content.toString() + "'");
+            System.out.println("Generating response payload size " + length + " characters as 'content': '" + content.toString() + "'");
         }
 
-        if (WireMockMetrics.DEEP_LEVEL) {
-            // Call the other endpoint using the same payload as the one we must return
+        if (WireMockMetrics.DEEP_LEVEL > 0) {
+            // Call the other endpoint requesting the same payload as the one we must return
+            // The payload we send uses a factor we must account for here
+
+            String payloadString = "";
+            if (WireMockMetrics.REQ_SIZE_FACTOR > 1) {
+                int factor = length/WireMockMetrics.REQ_SIZE_FACTOR;
+                if (factor == 0 )
+                    factor = length;
+
+                StringBuilder payload = new StringBuilder();
+                for (int i = 0; i < factor; i++) {
+                    char randomChar = (char) (Math.random() * 26 + 'a');
+                    payload.append(randomChar);
+                }
+                payloadString = payload.toString();
+            } else {
+                payloadString = content.toString();
+            }
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("content", payloadString);
             try {
                 String uri = WireMockMetrics.DEEP_ENDPOINT + "?id=" + length;
+                if (WireMockMetrics.TRACE){
+                    System.out.println("Generating deep request payload size " + payloadString.length() + " characters as 'content': '" + payloadString
+                    + "' towards endpoint: " + uri);
+                }
                 HttpRequest deepRequest = HttpRequest.newBuilder()
                 .uri(new URI(uri))
                 .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(responseBody.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();
                 
                 HttpClient deepClient = HttpClient.newHttpClient();
