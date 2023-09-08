@@ -20,6 +20,8 @@ import java.net.http.HttpResponse.BodyHandlers;
 
 public class RandomBodyStringResponseTransformer extends ResponseTransformer {
 
+    HttpClient deepClient = HttpClient.newHttpClient();
+    
     // Define custom metrics (e.g., request count)
     static final Counter requestCounter = Counter.build()
             .name("wiremock_requests_total")
@@ -92,8 +94,7 @@ public class RandomBodyStringResponseTransformer extends ResponseTransformer {
                 .headers("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();
-                
-                HttpClient deepClient = HttpClient.newHttpClient();
+                                
                 HttpResponse<String> deepClientResponse = deepClient.send(deepRequest, BodyHandlers.ofString());
 
                 if (deepClientResponse.statusCode() != 200){
